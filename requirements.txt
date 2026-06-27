@@ -1,0 +1,5 @@
+anthropic
+claude-agent-sdk
+requests
+schedule
+python-dotenv
