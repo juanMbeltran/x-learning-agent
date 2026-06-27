@@ -68,6 +68,7 @@ def post_tweet(text: str) -> dict:
 
     body = {
         "content": text,
+        "publishNow": True,
         "platforms": [
             {"platform": "twitter", "accountId": _account_id()}
         ],
