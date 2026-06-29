@@ -11,19 +11,10 @@ import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
-from dotenv import load_dotenv
 
-load_dotenv()
-
-# DATA_DIR can be overridden by the DATA_DIR env var.
-# On Render, set DATA_DIR=/data (the persistent disk mount point).
-# Locally it defaults to the project root so nothing changes.
-BASE_DIR = Path(__file__).parent.parent
-DATA_DIR = Path(os.getenv("DATA_DIR", BASE_DIR))
-DATA_DIR.mkdir(parents=True, exist_ok=True)
-
-LEARNINGS_FILE = DATA_DIR / "learnings.md"
-HISTORY_FILE = DATA_DIR / "post_history.json"
+BASE_DIR = Path(__file__).parent.parent  # project root
+LEARNINGS_FILE = BASE_DIR / "learnings.md"
+HISTORY_FILE = BASE_DIR / "post_history.json"
 
 
 # ---------------------------------------------------------------------------

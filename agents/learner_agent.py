@@ -40,6 +40,9 @@ def _format_post_history(posts: list[dict]) -> str:
     lines = []
     for p in posts:
         m = p.get("metrics", {})
+        # Skip posts where metrics have never been fetched (all zeros AND no fetch date)
+        if m.get("last_fetched") is None and m.get("impressions", 0) == 0:
+            continue
         lines.append(
             f'Post: "{p["text"]}"\n'
             f'  Posted at : {p.get("posted_at", "unknown")}\n'
