@@ -18,7 +18,7 @@ from tools import x_client, storage
 # - Under 1 hour: too early, engagement hasn't had time to accumulate.
 # - Over 48 hours: engagement has plateaued; no need to keep polling.
 MIN_AGE_HOURS = 1
-MAX_AGE_HOURS = 48
+MAX_AGE_HOURS = 72
 
 
 def collect_all_metrics() -> None:
