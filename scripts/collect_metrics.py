@@ -1,27 +1,31 @@
+#!/usr/bin/env python3
 """
-Deterministic metrics collector.
+Deterministic script: fetch engagement metrics for recent posts.
 
-Runs on a schedule (see scheduler.py). Loops over post_history.json,
-fetches fresh metrics from X for posts that are old enough to have
-accumulated engagement, and writes the results back to disk.
-
-There is no AI here. The decision of WHAT to fetch is simple time-based
-logic. The actual interpretation of those numbers happens in learner_agent.py.
+Loops over post_history.json and updates metrics for posts aged
+between MIN_AGE_HOURS and MAX_AGE_HOURS. No AI, no judgment — just
+the same Zernio API call for every eligible post.
 """
-
+import os
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from datetime import datetime, timezone
-from tools import x_client, storage
 
+from dotenv import load_dotenv
+from tools import storage, x_client
 
-# Only fetch metrics for posts between 1 and 48 hours old.
-# - Under 1 hour: too early, engagement hasn't had time to accumulate.
-# - Over 48 hours: engagement has plateaued; no need to keep polling.
+load_dotenv()
+
+# Only fetch metrics for posts in this age window.
+# Under 1h: engagement hasn't accumulated yet.
+# Over 72h: engagement has plateaued.
 MIN_AGE_HOURS = 1
 MAX_AGE_HOURS = 72
 
 
-def collect_all_metrics() -> None:
+def main() -> None:
     posts = storage.get_posts_older_than_hours(MIN_AGE_HOURS)
 
     if not posts:
@@ -30,9 +34,6 @@ def collect_all_metrics() -> None:
 
     collected = 0
     for post in posts:
-        post_id = post["post_id"]
-
-        # Skip posts that are too old — engagement has plateaued
         posted_at = datetime.fromisoformat(post["posted_at"])
         if posted_at.tzinfo is None:
             posted_at = posted_at.replace(tzinfo=timezone.utc)
@@ -40,6 +41,7 @@ def collect_all_metrics() -> None:
         if age_hours > MAX_AGE_HOURS:
             continue
 
+        post_id = post["post_id"]
         try:
             metrics = x_client.get_post_metrics(post_id)
             storage.update_post_metrics(post_id, metrics)
@@ -51,10 +53,10 @@ def collect_all_metrics() -> None:
             )
             collected += 1
         except Exception as e:
-            print(f"[{post_id}] Failed to fetch metrics: {e}", file=sys.stderr)
+            print(f"[{post_id}] Failed: {e}", file=sys.stderr)
 
     print(f"Done. Updated metrics for {collected} post(s).")
 
 
 if __name__ == "__main__":
-    collect_all_metrics()
+    main()

@@ -15,34 +15,36 @@ Post to X → Wait for engagement → Read metrics → Learn what worked
 ```
 
 Every day the agent:
-1. Posts 3 tweets (9am, 1pm, 6pm UTC) written by Claude based on past learnings
+1. Posts 3 tweets (9am, 1pm, 6pm UTC) — written by Claude based on past learnings
 2. Collects engagement metrics every 6 hours
-3. At 8pm UTC runs a learner agent that reads all metrics and rewrites `learnings.md` with updated insights
+3. At 8pm UTC analyzes all metrics and rewrites `learnings.md` with updated insights
 
 ---
 
 ## Project Structure
 
 ```
-├── scheduler.py           — runs all jobs on a timer (deterministic)
-├── metrics_collector.py   — fetches engagement metrics from X (deterministic)
-├── agents/
-│   ├── poster_agent.py    — Claude writes and posts tweets (agentic)
-│   └── learner_agent.py   — Claude reads metrics and updates learnings (agentic)
+├── agent.py                      — one Claude agent with an agentic tool-use loop
+├── scheduler.py                  — deterministic timer: decides WHEN, not WHAT
+├── .claude/
+│   └── agents/
+│       └── x_posting_agent.md   — agent definition (system prompt + capabilities)
+├── scripts/
+│   ├── post_tweet.py             — post a tweet to X (takes --text arg)
+│   └── collect_metrics.py       — fetch engagement metrics from X
 ├── tools/
-│   ├── x_client.py        — Zernio API wrapper (deterministic)
-│   ├── storage.py         — reads/writes local files (deterministic)
-│   └── get_account_id.py  — one-time setup utility
-├── learnings.md           — the agent's evolving knowledge base
-├── post_history.json      — log of all posts and their metrics
-└── PLAN.md                — full architecture and design decisions
+│   ├── x_client.py              — Zernio API wrapper
+│   ├── storage.py               — reads/writes local files
+│   └── get_account_id.py        — one-time setup utility
+├── learnings.md                  — the agent's evolving knowledge base
+└── post_history.json             — log of all posts and their metrics
 ```
 
 ---
 
 ## Key Concept: Deterministic vs Agentic
 
-Not every task needs AI. This project deliberately mixes both:
+Not every task needs AI. There is **one** Claude agent. Everything else is a deterministic script.
 
 | Task | Approach | Why |
 |---|---|---|
@@ -50,7 +52,9 @@ Not every task needs AI. This project deliberately mixes both:
 | Writing a tweet | Agentic | Needs creativity and context |
 | Fetching metrics | Deterministic | Same API call every time |
 | Interpreting metrics | Agentic | Requires reasoning about why things worked |
-| Reading/writing files | Deterministic | Pure I/O |
+| Posting to X | Deterministic | Pure I/O once the text is decided |
+
+The agent (`agent.py`) reasons and decides. The scripts in `scripts/` execute without judgment.
 
 ---
 

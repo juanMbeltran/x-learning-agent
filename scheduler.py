@@ -1,29 +1,21 @@
 """
-Deterministic scheduler — the conductor of the whole system.
+Deterministic scheduler — decides WHEN things run.
 
-This file decides WHEN things run. It never makes content decisions.
-It just wakes up the right function at the right time.
+This file has no AI. It just wakes up the agent at the right times.
+The agent decides what to do; the scheduler decides when.
 
-Daily schedule:
-  09:00  — post a tweet
-  13:00  — post a tweet
-  18:00  — post a tweet
-  Every 6h — collect metrics for recent posts
-  20:00  — run the learner agent (after the day's metrics are in)
-
-Why not let the agent decide when to post?
-Because timing should be consistent and predictable, not creative.
-An agent scheduling its own runs is a recipe for chaos.
+Daily schedule (UTC):
+  09:00, 13:00, 18:00  — post a tweet
+  every 6 hours         — collect engagement metrics
+  20:00                 — analyze metrics and update learnings.md
 """
 
-import time
 import logging
+import subprocess
+import time
+
 import schedule
 from dotenv import load_dotenv
-
-from agents.poster_agent import generate_and_post
-from agents.learner_agent import analyze_and_learn
-from metrics_collector import collect_all_metrics
 
 load_dotenv()
 
@@ -35,35 +27,37 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
-def run_poster():
-    log.info("--- Poster agent starting ---")
+def run_poster() -> None:
+    log.info("--- Poster starting ---")
     try:
-        result = generate_and_post()
-        log.info(f"Posted: {result['post_id']} — {result['text'][:60]}...")
+        from agent import run
+        run("POST: write and publish one tweet based on past learnings.")
     except Exception as e:
-        log.error(f"Poster agent failed: {e}")
+        log.error(f"Poster failed: {e}")
 
 
-def run_metrics():
+def run_metrics() -> None:
     log.info("--- Metrics collector starting ---")
     try:
-        collect_all_metrics()
+        result = subprocess.run(
+            ["python", "scripts/collect_metrics.py"],
+            capture_output=False,
+            text=True,
+        )
+        if result.returncode != 0:
+            log.error("Metrics collector exited with non-zero status")
     except Exception as e:
         log.error(f"Metrics collector failed: {e}")
 
 
-def run_learner():
-    log.info("--- Learner agent starting ---")
+def run_learner() -> None:
+    log.info("--- Learner starting ---")
     try:
-        analyze_and_learn()
-        log.info("Learnings updated.")
+        from agent import run
+        run("LEARN: read post_history.json, analyze engagement patterns, and update learnings.md.")
     except Exception as e:
-        log.error(f"Learner agent failed: {e}")
+        log.error(f"Learner failed: {e}")
 
-
-# ---------------------------------------------------------------------------
-# Schedule
-# ---------------------------------------------------------------------------
 
 schedule.every().day.at("09:00").do(run_poster)
 schedule.every().day.at("13:00").do(run_poster)
@@ -75,8 +69,7 @@ schedule.every().day.at("20:00").do(run_learner)
 
 
 if __name__ == "__main__":
-    log.info("Scheduler started. Waiting for jobs...")
-    log.info("Jobs registered:")
+    log.info("Scheduler started. Jobs:")
     for job in schedule.jobs:
         log.info(f"  {job}")
 
