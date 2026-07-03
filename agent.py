@@ -2,20 +2,16 @@
 One Claude agent.
 
 Loads its system prompt from .claude/agents/x_posting_agent.md so the
-definition lives in one place. Uses an agentic tool-use loop: Claude
-decides which tools to call and when, rather than hardcoded function
-calls pretending to be intelligence.
+definition lives in one place. Runs an agentic tool-use loop: Claude
+decides which tools to call and when.
 
 Available tools:
-  bash           — run scripts in scripts/ or read data files
-  write_learnings — overwrite learnings.md with updated content
+  bash — read data files, check the time, run scripts in scripts/
 
 Usage:
-  python agent.py "POST: write and publish one tweet"
-  python agent.py "LEARN: analyze metrics and update learnings.md"
+  python agent.py "Check what needs to be done right now and do it."
 """
 
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -32,8 +28,8 @@ TOOLS = [
     {
         "name": "bash",
         "description": (
-            "Run a shell command. Allowed: reading data files with 'cat', "
-            "running scripts with 'python scripts/<name>.py [args]'."
+            "Run a shell command. Allowed: 'date' to check current time, "
+            "'cat' to read data files, 'python scripts/<name>.py [args]' to run scripts."
         ),
         "input_schema": {
             "type": "object",
@@ -43,21 +39,9 @@ TOOLS = [
             "required": ["command"],
         },
     },
-    {
-        "name": "write_learnings",
-        "description": "Overwrite learnings.md with updated insight content.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "content": {"type": "string", "description": "Full markdown content for learnings.md"},
-            },
-            "required": ["content"],
-        },
-    },
 ]
 
-# Only allow reading data files and calling scripts — nothing destructive.
-_ALLOWED_PREFIXES = ("cat ", "python scripts/", "python3 scripts/")
+_ALLOWED_PREFIXES = ("date", "cat ", "python scripts/", "python3 scripts/")
 
 
 def _run_bash(command: str) -> str:
@@ -75,16 +59,6 @@ def _run_bash(command: str) -> str:
         return "Error: command timed out after 30s"
     except Exception as e:
         return f"Error: {e}"
-
-
-def _write_learnings(content: str) -> str:
-    path = ROOT / "learnings.md"
-    # Respect DATA_DIR if set (Render persistent disk)
-    data_dir = os.getenv("DATA_DIR")
-    if data_dir:
-        path = Path(data_dir) / "learnings.md"
-    path.write_text(content, encoding="utf-8")
-    return f"learnings.md updated ({len(content)} chars)"
 
 
 def _load_system_prompt() -> str:
@@ -124,17 +98,10 @@ def run(task: str) -> None:
             if block.type != "tool_use":
                 continue
 
-            if block.name == "bash":
-                cmd = block.input["command"]
-                print(f"[tool]  $ {cmd}")
-                output = _run_bash(cmd)
-                print(f"[tool]  {output[:300]}")
-            elif block.name == "write_learnings":
-                print("[tool]  write_learnings")
-                output = _write_learnings(block.input["content"])
-                print(f"[tool]  {output}")
-            else:
-                output = f"Error: unknown tool '{block.name}'"
+            cmd = block.input["command"]
+            print(f"[tool]  $ {cmd}")
+            output = _run_bash(cmd)
+            print(f"[tool]  {output[:300]}")
 
             tool_results.append({
                 "type": "tool_result",
@@ -149,6 +116,5 @@ def run(task: str) -> None:
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python agent.py <task>")
-        print('  e.g. python agent.py "POST: write and publish one tweet"')
         sys.exit(1)
     run(" ".join(sys.argv[1:]))
