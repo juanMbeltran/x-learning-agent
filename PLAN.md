@@ -88,7 +88,21 @@ python scripts/collect_metrics.py
 **write_learnings** — overwrite `learnings.md` with updated content.
 
 Claude decides which tools to call and when — this is the agentic part.
-The scheduler just triggers it with a task description.
+The scheduler just wakes the agent up every 30 minutes; the agent decides
+what action is needed (or that nothing is needed) by reading the current state.
+
+---
+
+## Scheduler
+
+The scheduler is a pure heartbeat — it wakes the agent every 30 minutes
+with no instructions about what to do. The agent reads `post_history.json`,
+checks the current time, and decides whether to post, collect metrics,
+update learnings, or do nothing.
+
+The schedule rules live in the agent definition (`.claude/agents/x_posting_agent.md`),
+not in the scheduler. This means the logic for "when to act" is part of the agent's
+reasoning, not hardcoded in Python.
 
 ---
 
@@ -120,20 +134,6 @@ A 200 OK response does not mean the intended outcome occurred.
 
 All file I/O in one place. Reads `DATA_DIR` from the environment to determine where files live.
 Locally defaults to the project root. On Render it points to `/data` (the persistent disk).
-
----
-
-## Scheduler
-
-```python
-schedule.every().day.at("09:00").do(run_poster)
-schedule.every().day.at("13:00").do(run_poster)
-schedule.every().day.at("18:00").do(run_poster)
-schedule.every(6).hours.do(run_metrics)
-schedule.every().day.at("20:00").do(run_learner)
-```
-
-All times are UTC. Colombia (UTC-5) equivalent: 4am, 8am, 1pm posts / 3pm learner.
 
 ---
 

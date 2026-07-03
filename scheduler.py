@@ -1,17 +1,13 @@
 """
-Deterministic scheduler — decides WHEN things run.
+Deterministic scheduler — a heartbeat, nothing more.
 
-This file has no AI. It just wakes up the agent at the right times.
-The agent decides what to do; the scheduler decides when.
+This file decides WHEN to wake the agent up. It does not tell the agent
+what to do. The agent reads the current state and makes that call itself.
 
-Daily schedule (UTC):
-  09:00, 13:00, 18:00  — post a tweet
-  every 6 hours         — collect engagement metrics
-  20:00                 — analyze metrics and update learnings.md
+The agent is invoked every 30 minutes. If nothing is due, it does nothing.
 """
 
 import logging
-import subprocess
 import time
 
 import schedule
@@ -27,52 +23,21 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
-def run_poster() -> None:
-    log.info("--- Poster starting ---")
+def run_agent() -> None:
+    log.info("--- Agent waking up ---")
     try:
         from agent import run
-        run("POST: write and publish one tweet based on past learnings.")
+        run("Check the current time and post_history.json, then decide what needs to be done right now and do it.")
     except Exception as e:
-        log.error(f"Poster failed: {e}")
+        log.error(f"Agent failed: {e}")
 
 
-def run_metrics() -> None:
-    log.info("--- Metrics collector starting ---")
-    try:
-        result = subprocess.run(
-            ["python", "scripts/collect_metrics.py"],
-            capture_output=False,
-            text=True,
-        )
-        if result.returncode != 0:
-            log.error("Metrics collector exited with non-zero status")
-    except Exception as e:
-        log.error(f"Metrics collector failed: {e}")
-
-
-def run_learner() -> None:
-    log.info("--- Learner starting ---")
-    try:
-        from agent import run
-        run("LEARN: read post_history.json, analyze engagement patterns, and update learnings.md.")
-    except Exception as e:
-        log.error(f"Learner failed: {e}")
-
-
-schedule.every().day.at("09:00").do(run_poster)
-schedule.every().day.at("13:00").do(run_poster)
-schedule.every().day.at("18:00").do(run_poster)
-
-schedule.every(6).hours.do(run_metrics)
-
-schedule.every().day.at("20:00").do(run_learner)
+schedule.every(30).minutes.do(run_agent)
 
 
 if __name__ == "__main__":
-    log.info("Scheduler started. Jobs:")
-    for job in schedule.jobs:
-        log.info(f"  {job}")
-
+    log.info("Scheduler started. Agent will be invoked every 30 minutes.")
+    run_agent()  # run once immediately on startup
     while True:
         schedule.run_pending()
         time.sleep(30)
