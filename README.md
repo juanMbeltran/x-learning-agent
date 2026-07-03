@@ -14,10 +14,11 @@ Post to X → Wait for engagement → Read metrics → Learn what worked
     └──────────── Post better tomorrow ◄───────────────────┘
 ```
 
-Every day the agent:
-1. Posts 3 tweets (9am, 1pm, 6pm UTC) — written by Claude based on past learnings
-2. Collects engagement metrics every 6 hours
-3. At 8pm UTC analyzes all metrics and rewrites `learnings.md` with updated insights
+Every 30 minutes the scheduler wakes the agent. The agent checks the current time and state, then decides:
+- Whether to post a tweet (targets ~9am, 1pm, 6pm UTC — but only if no recent post)
+- Whether to collect engagement metrics (every ~6 hours)
+- Whether to update `learnings.md` with fresh insights (once per day, ~8pm UTC)
+- Or do nothing if nothing is due
 
 ---
 
@@ -31,7 +32,8 @@ Every day the agent:
 │       └── x_posting_agent.md   — agent definition (system prompt + capabilities)
 ├── scripts/
 │   ├── post_tweet.py             — post a tweet to X (takes --text arg)
-│   └── collect_metrics.py       — fetch engagement metrics from X
+│   ├── collect_metrics.py       — fetch engagement metrics from X
+│   └── write_learnings.py       — overwrite learnings.md (reads content from stdin)
 ├── tools/
 │   ├── x_client.py              — Zernio API wrapper
 │   ├── storage.py               — reads/writes local files
