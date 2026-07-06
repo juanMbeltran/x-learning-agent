@@ -109,14 +109,14 @@ def get_post_metrics(post_id: str) -> dict:
         params={"postId": post_id},
     )
     response.raise_for_status()
-    data = response.json()
+    analytics = response.json().get("analytics", {})
 
     return {
         "post_id": post_id,
-        "likes": data.get("likes", 0),
-        "retweets": data.get("shares", 0),   # Zernio uses "shares" for retweets
-        "replies": data.get("comments", 0),
-        "impressions": data.get("impressions", 0),
+        "likes": analytics.get("likes", 0),
+        "retweets": analytics.get("shares", 0),
+        "replies": analytics.get("comments", 0),
+        "impressions": analytics.get("impressions", 0),
         "fetched_at": datetime.now(timezone.utc).isoformat(),
     }
 
