@@ -1,7 +1,7 @@
 """
 Deterministic scheduler — a heartbeat, nothing more.
 
-Wakes the agent every 30 minutes. The agent checks the current state
+Wakes the agent every 60 minutes. The agent checks the current state
 and decides what action is needed, if any.
 """
 
@@ -30,11 +30,11 @@ def run_agent() -> None:
         log.error(f"Agent failed: {e}")
 
 
-schedule.every(30).minutes.do(run_agent)
+schedule.every(60).minutes.do(run_agent)
 
 
 if __name__ == "__main__":
-    log.info("Scheduler started. Agent will be invoked every 30 minutes.")
+    log.info("Scheduler started. Agent will be invoked every 60 minutes.")
     run_agent()
     while True:
         schedule.run_pending()
