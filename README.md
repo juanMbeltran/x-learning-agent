@@ -14,7 +14,7 @@ Post to X → Wait for engagement → Read metrics → Learn what worked
     └──────────── Post better tomorrow ◄───────────────────┘
 ```
 
-Every 30 minutes the scheduler wakes the agent. The agent runs `scripts/status.py` to check the current state, then decides:
+Every 60 minutes the scheduler wakes the agent. The agent runs `scripts/status.py` to check the current state, then decides:
 - Whether to post a tweet (targets 8am, 1pm, 7pm Colombia time — max 3 posts per day, min 3 hours apart)
 - Whether to collect engagement metrics (every ~6 hours)
 - Whether to update `learnings.md` with fresh insights (once per day, ~3pm Colombia time)
