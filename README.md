@@ -1,6 +1,6 @@
 # Self-Learning X Posting Agent
 
-An autonomous agent that posts on X (Twitter) several times a day, reads its own engagement metrics, learns what works, and uses those learnings to write better posts the next day.
+An autonomous agent that posts on X (Twitter) several times a day, reads its own engagement metrics, learns what works, and uses those learnings to write better posts going forward.
 
 Built as a learning project to understand the difference between deterministic code and agentic AI, and how to combine both in a real system.
 
@@ -15,7 +15,7 @@ Post to X → Wait for engagement → Read metrics → Learn what worked
 ```
 
 Every 60 minutes the scheduler wakes the agent. The agent runs `scripts/status.py` to check the current state, then decides:
-- Whether to post a tweet (agent picks the time and language — English or Spanish — based on `learnings.md`, favoring Colombia waking hours — max 4 posts per day treated as a ceiling not a target, min 3 hours apart, spread across the day)
+- Whether to post a tweet (agent picks the time and language — EN/ES — based on `learnings.md` — up to 4 posts/day, spread out)
 - Whether to collect engagement metrics (every ~6 hours)
 - Whether to update `learnings.md` with fresh insights (once per day, ~3pm Colombia time)
 - Or do nothing if nothing is due
