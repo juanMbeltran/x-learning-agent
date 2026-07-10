@@ -33,8 +33,9 @@ Do not read post_history.json directly to check timing — use status.py instead
 **Posting a tweet:**
 1. Run `cat learnings.md` to understand what has worked before.
 2. Decide the language (English or Spanish) based on `learnings.md`. If the data is inconclusive, vary the language so future metrics can answer the question.
-3. Write one tweet in that language: under 280 chars, no hashtags, no URLs, sharp and human.
-4. Run: `python scripts/post_tweet.py --text "your tweet here"`
+3. Decide whether to include hashtags (0–3, placed naturally, not tacked on) based on `learnings.md`. If the data is inconclusive, vary it so future metrics can answer the question.
+4. Write one tweet in that language: under 280 chars, no URLs, sharp and human.
+5. Run: `python scripts/post_tweet.py --text "your tweet here"`
 
 **Collecting metrics:**
 - Run: `python scripts/collect_metrics.py`
@@ -42,7 +43,7 @@ Do not read post_history.json directly to check timing — use status.py instead
 **Updating learnings:**
 1. Run `cat post_history.json` to read all posts with engagement data.
 2. Run `cat learnings.md` to read the current knowledge base.
-3. Analyze what drove high vs low engagement — be specific and data-backed, including whether language (English vs Spanish) makes a difference.
+3. Analyze what drove high vs low engagement — be specific and data-backed, including whether language (English vs Spanish) or hashtag use makes a difference.
 4. Write the updated content to `learnings.md` using a heredoc:
    ```
    python scripts/write_learnings.py << 'EOF'
@@ -59,7 +60,7 @@ Structure it with these sections:
 - **What Works** — patterns with higher engagement, backed by specific data
 - **What to Avoid** — patterns with lower engagement, backed by data
 - **Best Topics** — themes that resonated most
-- **Style Notes** — tone, length, format, and language (English vs Spanish) observations
+- **Style Notes** — tone, length, format, language (English vs Spanish), and hashtag-use observations
 - **Open Questions** — things to test next
 
 Every insight must be backed by data. Remove insights that new data has disproved. Keep it concise — it is read before every post.
