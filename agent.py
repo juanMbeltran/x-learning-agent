@@ -43,6 +43,8 @@ TOOLS = [
 
 _ALLOWED_PREFIXES = ("date", "cat ", "python scripts/", "python3 scripts/")
 
+MAX_TOOL_ITERATIONS = 3
+
 
 def _run_bash(command: str) -> str:
     if not any(command.strip().startswith(p) for p in _ALLOWED_PREFIXES):
@@ -75,9 +77,9 @@ def run(task: str) -> None:
     client = Anthropic()
     messages = [{"role": "user", "content": task}]
 
-    print(f"[agent] {task}\n")
+    print(f"[agent] {task}\n", flush=True)
 
-    while True:
+    for _ in range(MAX_TOOL_ITERATIONS):
         response = client.messages.create(
             model="claude-sonnet-4-6",
             max_tokens=2000,
@@ -88,10 +90,10 @@ def run(task: str) -> None:
 
         for block in response.content:
             if hasattr(block, "text") and block.text:
-                print(f"[agent] {block.text}")
+                print(f"[agent] {block.text}", flush=True)
 
         if response.stop_reason != "tool_use":
-            break
+            return
 
         tool_results = []
         for block in response.content:
@@ -99,9 +101,9 @@ def run(task: str) -> None:
                 continue
 
             cmd = block.input["command"]
-            print(f"[tool]  $ {cmd}")
+            print(f"[tool]  $ {cmd}", flush=True)
             output = _run_bash(cmd)
-            print(f"[tool]  {output[:300]}")
+            print(f"[tool]  {output[:300]}", flush=True)
 
             tool_results.append({
                 "type": "tool_result",
@@ -111,6 +113,8 @@ def run(task: str) -> None:
 
         messages.append({"role": "assistant", "content": response.content})
         messages.append({"role": "user", "content": tool_results})
+
+    print(f"[agent] Stopped after {MAX_TOOL_ITERATIONS} tool calls without finishing.", flush=True)
 
 
 if __name__ == "__main__":
